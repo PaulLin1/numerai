@@ -1,4 +1,6 @@
 venv
-data
+local_data
+models
 .DS_Store
 .ipynb_checkpoints
+.env
