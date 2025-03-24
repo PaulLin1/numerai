@@ -1,5 +1,5 @@
 venv
-local_data
+data
 models
 .DS_Store
 .ipynb_checkpoints
