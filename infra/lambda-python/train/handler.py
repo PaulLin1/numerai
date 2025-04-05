@@ -10,7 +10,7 @@ def lambda_handler(event, context):
     training_job_name = f"job-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
     role = os.environ.get("SAGEMAKER_ARN")
-    bucket = f's3://{os.environ.get("S3_URL")}'
+    bucket = f's3://{os.environ.get("S3_NAME")}'
     input_data = bucket + '/data/v5.0'
     output_data = bucket + '/models'
 

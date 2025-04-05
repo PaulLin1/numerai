@@ -43,7 +43,7 @@ train = pd.read_parquet(
 train = train[train['era'].isin(train['era'].unique()[::4])]
 
 # Save downsampled and small feature set only train parquet file
-train.to_csv(f'data/{data_version}/train_small.parquet')
+train.to_csv(f'data/{data_version}/downsampled/train.csv')
 
 
 # -------------------------------------------------------------------------
@@ -68,7 +68,7 @@ eras_to_embargo = [str(era).zfill(4) for era in [last_train_era + i for i in ran
 validation = validation[~validation['era'].isin(eras_to_embargo)]
 
 # Save downsampled and small feature set only validation parquet file
-validation.to_csv(f'data/{data_version}/validation_small.parquet')
+validation.to_csv(f'data/{data_version}/downsampled/validation.csv')
 
 
 # -------------------------------------------------------------------------

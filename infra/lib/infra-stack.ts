@@ -6,6 +6,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
 import * as sagemaker from 'aws-cdk-lib/aws-sagemaker';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
+import * as glue from 'aws-cdk-lib/aws-glue';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 
@@ -53,7 +54,7 @@ export class InfraStack extends cdk.Stack {
 			timeout: cdk.Duration.minutes(15),
 			environment: {
 				SAGEMAKER_ARN: sageMakerRole.roleArn,
-				S3_URL: sageMakerBucket.bucketName
+				S3_NAME: sageMakerBucket.bucketName
 			}
 		});
 
@@ -64,7 +65,7 @@ export class InfraStack extends cdk.Stack {
 			code: lambda.Code.fromAsset(this.node.tryGetContext("ENDPOINT_LAMBDA_DIR")),
 			environment: {
 				SAGEMAKER_ARN: sageMakerRole.roleArn,
-				S3_URL: sageMakerBucket.bucketName,
+				S3_NAME: sageMakerBucket.bucketName,
 			},
 			timeout: cdk.Duration.minutes(15),
 		});
@@ -112,7 +113,44 @@ export class InfraStack extends cdk.Stack {
 			timeout: cdk.Duration.minutes(30),
 		});
 
-		
+
+		// --------------------------------------------------------------------
+	  
+		const glueJobRole = new iam.Role(this, 'GlueJobRole', {
+			assumedBy: new iam.ServicePrincipal('glue.amazonaws.com'),
+			managedPolicies: [
+				iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole')
+			]
+		});
+	
+		glueJobRole.addToPolicy(new iam.PolicyStatement({
+			actions: [
+				's3:GetObject',
+				's3:PutObject'
+			],
+			resources: [sageMakerBucket.bucketArn,
+				`${sageMakerBucket.bucketArn}/*`
+			]
+		}));
+
+		const glueJob = new glue.CfnJob(this, 'ValidationJob', {
+			name: 'sagemaker-validation',
+			role: glueJobRole.roleArn,
+			command: {
+				name: 'glueetl',
+				scriptLocation: `s3://${sageMakerBucket.bucketName}/scripts/validation.py`,
+				pythonVersion: '3',
+			},
+			defaultArguments: {
+				'--input_path': `s3://${sageMakerBucket.bucketName}/data/v5.0/validation/validation.parquet`,
+				'--output_path': `s3://${sageMakerBucket.bucketName}/data/v5.0/validation/`,
+				// '--sagemaker_endpoint_name': '/numerai/current_endpoint',
+			},
+			glueVersion: '3.0',
+			maxRetries: 1,
+			timeout: 60,
+		});
+
 
 		// --------------------------------------------------------------------
 
@@ -132,16 +170,17 @@ export class InfraStack extends cdk.Stack {
 
 
 		// Predict Function
-		const predictFunction = new lambda.Function(this, 'PredictFunction', {
-			runtime: lambda.Runtime.PYTHON_3_12,
-			handler: 'handler.lambda_handler',
-			code: lambda.Code.fromAsset(this.node.tryGetContext("PREDICT_LAMBDA_DIR")),
-			timeout: cdk.Duration.minutes(15),
-			environment: {
-				SAGEMAKER_ARN: sageMakerRole.roleArn,
-				S3_NAME: sageMakerBucket.bucketName
-			}
-		});
+		// const predictFunction = new lambda.Function(this, 'PredictFunction', {
+		// 	runtime: lambda.Runtime.PYTHON_3_12,
+		// 	handler: 'handler.lambda_handler',
+		// 	code: lambda.Code.fromAsset(this.node.tryGetContext("PREDICT_LAMBDA_DIR")),
+		// 	timeout: cdk.Duration.minutes(15),
+		// 	environment: {
+		// 		SAGEMAKER_ARN: sageMakerRole.roleArn,
+		// 		S3_NAME: sageMakerBucket.bucketName
+		// 	}
+		// });
+
 
 		// // Grant Lambda permission to invoke SageMaker endpoint
 		// predictFunction.addToRolePolicy(

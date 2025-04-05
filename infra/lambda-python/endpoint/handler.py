@@ -7,7 +7,7 @@ def lambda_handler(event, context):
     sagemaker_client = boto3.client('sagemaker')
     model_name = event.get("training_job_name")
 
-    s3_uri = f's3://{os.environ.get("S3_URL")}' + '/models/' + model_name + '/output/model.tar.gz'
+    s3_uri = f's3://{os.environ.get("S3_NAME")}' + '/models/' + model_name + '/output/model.tar.gz'
 
     model_response = sagemaker_client.create_model(
         ModelName=model_name,
@@ -42,7 +42,7 @@ def lambda_handler(event, context):
         EndpointConfigName=f"{model_name}-config"
     )
 
-    ssm_client = boto3.client("ssm", region_name="your-region")
+    ssm_client = boto3.client("ssm")
     ssm_client.put_parameter(
         Name="/numerai/current_endpoint",
         Value=f"{model_name}-endpoint",
