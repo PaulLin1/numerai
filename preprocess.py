@@ -50,9 +50,7 @@ def predict_batch(iterator):
     for batch in iterator:
         pdf = pd.DataFrame(batch)
         
-        # Prepare data for prediction
-        # Drop ID columns or columns not needed for prediction if necessary
-        # features_pdf = pdf.drop(['id'], axis=1, errors='ignore')
+    
         
         csv_data = pdf.to_csv(index=False, header=False)
         

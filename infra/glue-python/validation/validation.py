@@ -30,9 +30,6 @@ ssm_client = boto3.client("ssm")
 response = ssm_client.get_parameter(Name="/numerai/current_endpoint")
 sagemaker_endpoint = response["Parameter"]["Value"]
 
-input_path = 's3://numeraipipeline-numeraisagemakerbucketb4fc2795-6l2nwdjg9d4d/data/v5.0/validation/validation.parquet'
-output_path = 's3://numeraipipeline-numeraisagemakerbucketb4fc2795-6l2nwdjg9d4d/data/v5.0/validation/'
-
 sagemaker_runtime = boto3.client('sagemaker-runtime')
 
 print(f"Reading data from {input_path}")

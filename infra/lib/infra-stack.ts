@@ -133,6 +133,7 @@ export class InfraStack extends cdk.Stack {
 			]
 		}));
 
+		// Glue job for validation
 		const glueJob = new glue.CfnJob(this, 'ValidationJob', {
 			name: 'sagemaker-validation',
 			role: glueJobRole.roleArn,
@@ -168,36 +169,24 @@ export class InfraStack extends cdk.Stack {
 		});
 		sageMakerBucket.grantPut(downloadLiveFunction)
 
-
 		// Predict Function
-		// const predictFunction = new lambda.Function(this, 'PredictFunction', {
-		// 	runtime: lambda.Runtime.PYTHON_3_12,
-		// 	handler: 'handler.lambda_handler',
-		// 	code: lambda.Code.fromAsset(this.node.tryGetContext("PREDICT_LAMBDA_DIR")),
-		// 	timeout: cdk.Duration.minutes(15),
-		// 	environment: {
-		// 		SAGEMAKER_ARN: sageMakerRole.roleArn,
-		// 		S3_NAME: sageMakerBucket.bucketName
-		// 	}
-		// });
+		const predictFunction = new lambda.Function(this, 'PredictFunction', {
+			runtime: lambda.Runtime.PYTHON_3_12,
+			handler: 'handler.lambda_handler',
+			code: lambda.Code.fromAsset(this.node.tryGetContext("PREDICT_LAMBDA_DIR")),
+			timeout: cdk.Duration.minutes(15),
+			environment: {
+				SAGEMAKER_ARN: sageMakerRole.roleArn,
+				S3_NAME: sageMakerBucket.bucketName
+			}
+		});
 
-
-		// // Grant Lambda permission to invoke SageMaker endpoint
+		// Grant Lambda permission to invoke SageMaker endpoint
 		// predictFunction.addToRolePolicy(
 		// 	new iam.PolicyStatement({
 		// 	actions: ["sagemaker:InvokeEndpoint"],
 		// 	resources: ["arn:aws:sagemaker:us-east-1:your-account-id:endpoint/your-xgboost-endpoint-name"],
 		// 	})
 		// );
-	
-		// // Create API Gateway
-		// const api = new apigateway.RestApi(this, "SageMakerApi", {
-		// 	restApiName: "SageMaker API",
-		// });
-	
-		// // Add Lambda integration
-		// const lambdaIntegration = new apigateway.LambdaIntegration(predictFunction);
-		// api.root.addMethod("POST", lambdaIntegration);
-		
 	}
 }
